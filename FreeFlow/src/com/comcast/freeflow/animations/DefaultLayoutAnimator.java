@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright 2013 Comcast Cable Communications Management, LLC
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import com.comcast.freeflow.core.FreeFlowItem;
 import com.comcast.freeflow.core.LayoutChangeset;
 
 public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
-	
+
 	protected LayoutChangeset changeSet;
 
 	public static final String TAG = "DefaultLayoutAnimator";
@@ -68,14 +68,14 @@ public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
 	/**
 	 * If set to true, this forces the animation sets to animate in the
 	 * following sequence: delete then add then move
-	 * 
+	 *
 	 * If set to false, all sets will animate in parallel
 	 */
 	public boolean animateAllSetsSequentially = false;
 
 	/**
 	 * If set to true, this forces each view in a set to animate sequentially
-	 * 
+	 *
 	 * If set to false, all views for a set will animate in parallel
 	 */
 	public boolean animateIndividualCellsSequentially = false;
@@ -91,29 +91,31 @@ public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
 	@Override
 	public void cancel() {
 
-		if (disappearingSet != null)
-			disappearingSet.cancel();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
 
-		if (appearingSet != null)
-			appearingSet.cancel();
+            if (disappearingSet != null)
+                disappearingSet.cancel();
 
-		if (movingSet != null)
-			movingSet.cancel();
-		
-		for (FreeFlowItem item : changeSet.getAdded()) {
-			item.view.setAlpha(1f);
-		} 
-		for (FreeFlowItem item : changeSet.getRemoved()) {
-			item.view.setAlpha(1f);
-		} 
-		
+            if (appearingSet != null)
+                appearingSet.cancel();
+
+            if (movingSet != null)
+                movingSet.cancel();
+
+            for (FreeFlowItem item : changeSet.getAdded()) {
+                item.view.setAlpha(1f);
+            }
+            for (FreeFlowItem item : changeSet.getRemoved()) {
+                item.view.setAlpha(1f);
+            }
+        }
 		mIsRunning = false;
-		
-		
-		
+
+
+
 
 	}
-	
+
 	protected boolean mIsRunning = false;
 
 	@Override
@@ -123,7 +125,7 @@ public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
 		cancel();
 
 		mIsRunning = true;
-		
+
 		disappearingSet = null;
 		appearingSet = null;
 		movingSet = null;
@@ -157,42 +159,48 @@ public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
 			mIsRunning = false;
 			callback.onLayoutChangeAnimationsCompleted(this);
 		} else {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB_MR2) {
 
-			all.addListener(new AnimatorListener() {
+                all.addListener(new AnimatorListener() {
 
-				@Override
-				public void onAnimationStart(Animator animation) {
-				}
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                    }
 
-				@Override
-				public void onAnimationRepeat(Animator animation) {
-				}
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+                    }
 
-				@Override
-				public void onAnimationEnd(Animator animation) {
-					mIsRunning = false;
-					callback.onLayoutChangeAnimationsCompleted(DefaultLayoutAnimator.this);
-				}
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        mIsRunning = false;
+                        callback.onLayoutChangeAnimationsCompleted(DefaultLayoutAnimator.this);
+                    }
 
-				@Override
-				public void onAnimationCancel(Animator animation) {
-				}
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                    }
 
-			});
+                });
 
-			all.start();
+                all.start();
+            }
 		}
 	}
 
 	/**
 	 * The animation to run on the items being removed
-	 * 
+	 *
 	 * @param removed
 	 *            An ArrayList of <code>FreeFlowItems</code> removed
 	 * @return The AnimatorSet of the removed objects
 	 */
 	protected AnimatorSet getItemsRemovedAnimation(List<FreeFlowItem> removed) {
-		AnimatorSet disappearingSet = new AnimatorSet();
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB_MR2){
+            return null;
+        }
+
+        AnimatorSet disappearingSet = new AnimatorSet();
 		ArrayList<Animator> fades = new ArrayList<Animator>();
 		for (FreeFlowItem proxy : removed) {
 			fades.add(ObjectAnimator.ofFloat(proxy.view, "alpha", 0));
@@ -209,9 +217,13 @@ public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	protected AnimatorSet getItemsAddedAnimation(List<FreeFlowItem> added) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB_MR2){
+            return null;
+        }
+
 		AnimatorSet appearingSet = new AnimatorSet();
 		ArrayList<Animator> fadeIns = new ArrayList<Animator>();
 		for (FreeFlowItem proxy : added) {
@@ -230,6 +242,9 @@ public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
 	}
 
 	protected AnimatorSet getAnimationSequence() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB_MR2){
+            return null;
+        }
 
 		if (disappearingSet == null && appearingSet == null && movingSet == null)
 			return null;
@@ -256,6 +271,9 @@ public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
 	}
 
 	protected AnimatorSet getItemsMovedAnimation(List<Pair<FreeFlowItem, Rect>> moved) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB_MR2){
+            return null;
+        }
 
 		AnimatorSet anim = new AnimatorSet();
 		ArrayList<Animator> moves = new ArrayList<Animator>();
@@ -278,6 +296,10 @@ public class DefaultLayoutAnimator implements FreeFlowLayoutAnimator {
 
 	// @Override
 	public ValueAnimator transitionToFrame(final Rect of, final FreeFlowItem nf, final View v) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB_MR2){
+            return null;
+        }
+
 		ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
 		anim.setDuration(cellPositionTransitionAnimationDuration);
 

@@ -68,7 +68,13 @@ public class ArtbookActivity extends Activity implements OnClickListener{
 
 		Display display = getWindowManager().getDefaultDisplay();
 		Point size = new Point();
-		display.getSize(size);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB_MR2) {
+            display.getSize(size);
+        } else{
+            int width = display.getWidth();
+            int height = display.getHeight();
+            size.set(width, height);
+        }
 		
 		findViewById(R.id.load_more).setOnClickListener(this);
 		//Our new layout
